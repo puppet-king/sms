@@ -91,7 +91,7 @@ func TestSendPhoneNumberList_Insert(t *testing.T) {
 		fields fields
 	}{
 		{"insert", fields{
-			RequestId: "230303101956721098361", // 唯一索引重复测试会冲突
+			RequestId: "2303031019567210983611", // 唯一索引重复测试会冲突
 			ProjectId: "42",
 			AreaCode:  "1",
 			Number:    "12897129788",

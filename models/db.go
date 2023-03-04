@@ -53,8 +53,8 @@ func (s *SendPhoneNumberList) Insert() (int64, error) {
 	fmt.Println(dateTime)
 	res, err := stmt.Exec(
 		s.RequestId,
-		s.Number,
 		s.AreaCode,
+		s.Number,
 		s.Status,
 		s.ProjectId,
 	)
