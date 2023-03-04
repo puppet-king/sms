@@ -15,10 +15,14 @@ import (
 	"sms/models"
 )
 
-type PrivateConfig struct {
-	apiKey       string
-	projectToken string
-	database     string
+// EnvMode
+const SmsEnvMode = "SMS_ENV_MODE"
+
+func init() {
+	// 判断环节变量
+	if gin.ReleaseMode == os.Getenv(SmsEnvMode) {
+		gin.SetMode(gin.ReleaseMode)
+	}
 }
 
 func main() {
@@ -35,7 +39,6 @@ func main() {
 
 	// 创建路由
 	r := gin.New()
-
 	// 使用中间件来将 配置文件、 db 对象保存到 context.Context 对象中
 	r.Use(func(c *gin.Context) {
 		c.Set("privateConfig", config)
@@ -49,7 +52,7 @@ func main() {
 		Formatter: func(param gin.LogFormatterParams) string {
 			return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,请求状态码:%d,响应时间:%s,客户端:%s，错误信息:%s\n",
 				param.ClientIP,
-				param.TimeStamp.Format("2006年01月02日 15:03:04"),
+				param.TimeStamp.Format("2006年01月02日 15:04:05"),
 				param.Method,
 				param.Path,
 				param.StatusCode,
