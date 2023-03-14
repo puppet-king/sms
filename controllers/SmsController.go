@@ -36,8 +36,9 @@ var DefaultResult = gin.H{
 }
 
 var AllowOpenidList = map[string]bool{
-	"openid":                       true,
-	"opz1q5VY9-g3NbEGCaverijyU_TU": true,
+	"openid":                           true,
+	"opz1q5VY9-g3NbEGCaverijyU_TU":     true,
+	"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
 }
 
 type LoginRequest struct {
