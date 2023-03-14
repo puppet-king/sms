@@ -98,19 +98,19 @@ func GetPhoneNumber(c *gin.Context) {
 	params.Set("country_id", c.DefaultQuery("country_id", strconv.Itoa(CountryId)))
 	params.Set("project_id", c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
 
-	//curl := models.BaseCurl{
-	//	Host:   HOST,
-	//	Path:   "/api/control/get/number",
-	//	Params: params,
-	//}
-	//
-	//resp, err := curl.GET()
-	//if err != nil {
-	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	//	return
-	//}
+	curl := models.BaseCurl{
+		Host:   HOST,
+		Path:   "/api/control/get/number",
+		Params: params,
+	}
 
-	resp := "{\"code\":200,\"message\":\"Operation Success\",\"data\":{\"request_id\":\"230303101956721098368\",\"number\":\"12897129788\",\"area_code\":\"1\"}}"
+	resp, err := curl.GET()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//resp := "{\"code\":200,\"message\":\"Operation Success\",\"data\":{\"request_id\":\"230303101956721098368\",\"number\":\"12897129788\",\"area_code\":\"1\"}}"
 	s := ResultGetPhoneNumber{}
 	_ = json.Unmarshal([]byte(resp), &s)
 	SendPhoneNumberList := models.SendPhoneNumberList{
@@ -123,7 +123,7 @@ func GetPhoneNumber(c *gin.Context) {
 		SmsCode:   "",
 	}
 
-	_, err := SendPhoneNumberList.Insert()
+	_, err = SendPhoneNumberList.Insert()
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
