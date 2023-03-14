@@ -42,6 +42,7 @@ var AllowOpenidList = map[string]bool{
 	"openid":                       true,
 	"opz1q5VY9-g3NbEGCaverijyU_TU": true,
 	"opz1q5Vn8dwFsh2zrxU6s8bQwfwY": true,
+	"opz1q5esfV55VYlolpooTk-sNYjw": true,
 	//"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
 }
 
