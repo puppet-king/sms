@@ -29,25 +29,89 @@ type ResultGetPhoneNumber struct {
 	} `json:"data"`
 }
 
+var DefaultResult = gin.H{
+	"code": 200,
+	"msg":  "success",
+	"data": map[string]any{},
+}
+
+var AllowOpenidList = map[string]bool{
+	"openid": true,
+}
+
+type LoginRequest struct {
+	Code string `json:"code"`
+}
+
+func Login(c *gin.Context) {
+	result := DefaultResult
+	// 获取的是 code ！！
+	loginRequest := LoginRequest{}
+	err := c.BindJSON(&loginRequest)
+	if err != nil || loginRequest.Code == "" {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = "服务器异常"
+		c.JSON(http.StatusInternalServerError, result)
+		return
+	}
+
+	// 兑换 openid
+	openId, err := models.Code2Session(loginRequest.Code)
+	if err != nil || openId == "" {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = "无效数据"
+		c.JSON(http.StatusForbidden, result)
+		return
+	}
+
+	// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuX2lkIjoiIiwiaXNzIjoic21zIiwic3ViIjoic21zTG9naW4iLCJleHAiOjE2Nzg3ODU3NTksIm5iZiI6MTY3ODY5OTM1OSwiaWF0IjoxNjc4Njk5MzU5fQ.Yhp9P4SOdqbrfe0s7YR-R98eSp3azqUa1hO6aECzU5o
+
+	user := models.User{OpenId: openId}
+	// 过滤无效用户列表
+	if _, ok := AllowOpenidList[user.OpenId]; ok {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = err.Error()
+		c.JSON(http.StatusForbidden, result)
+		return
+	}
+
+	// 生成 token
+	token, err := models.GetToken(user)
+	if err != nil {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = err.Error()
+		c.JSON(http.StatusInternalServerError, result)
+		return
+	}
+
+	result["data"] = map[string]string{
+		"token":   token,
+		"open_id": user.OpenId,
+	}
+	result["code"] = 200
+	result["msg"] = "成功"
+	c.JSON(http.StatusOK, result)
+}
+
 // GetPhoneNumber 获取手机号码
 func GetPhoneNumber(c *gin.Context) {
 	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
 	params.Set("country_id", c.DefaultQuery("country_id", strconv.Itoa(CountryId)))
 	params.Set("project_id", c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
 
-	curl := models.BaseCurl{
-		Host:   HOST,
-		Path:   "/api/control/get/number",
-		Params: params,
-	}
+	//curl := models.BaseCurl{
+	//	Host:   HOST,
+	//	Path:   "/api/control/get/number",
+	//	Params: params,
+	//}
+	//
+	//resp, err := curl.GET()
+	//if err != nil {
+	//	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	//	return
+	//}
 
-	resp, err := curl.GET()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	//resp := "{\"code\":200,\"message\":\"Operation Success\",\"data\":{\"request_id\":\"230303101956721098368\",\"number\":\"12897129788\",\"area_code\":\"1\"}}"
+	resp := "{\"code\":200,\"message\":\"Operation Success\",\"data\":{\"request_id\":\"230303101956721098368\",\"number\":\"12897129788\",\"area_code\":\"1\"}}"
 	s := ResultGetPhoneNumber{}
 	_ = json.Unmarshal([]byte(resp), &s)
 	SendPhoneNumberList := models.SendPhoneNumberList{
@@ -59,7 +123,8 @@ func GetPhoneNumber(c *gin.Context) {
 		CancelAt:  "",
 		SmsCode:   "",
 	}
-	_, err = SendPhoneNumberList.Insert()
+
+	_, err := SendPhoneNumberList.Insert()
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return

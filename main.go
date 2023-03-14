@@ -27,13 +27,16 @@ func init() {
 
 func main() {
 	// 加载配置文件
-	config, err := config.LoadConfig("private_config.ini")
+	cfg, err := config.LoadConfig("private_config.ini")
 	if err != nil {
 		fmt.Printf("Fail to read file: %v", err)
 		os.Exit(20)
 	}
 
-	db, err := models.InitDBConnectionPool(config.Database)
+	// 加载 wechat
+	models.InitWechat()
+
+	db, err := models.InitDBConnectionPool(cfg.Database)
 	// 连接数据库
 	defer db.Close()
 
@@ -41,7 +44,7 @@ func main() {
 	r := gin.New()
 	// 使用中间件来将 配置文件、 db 对象保存到 context.Context 对象中
 	r.Use(func(c *gin.Context) {
-		c.Set("privateConfig", config)
+		c.Set("privateConfig", cfg)
 		c.Set("db", db)
 		c.Next()
 	})
@@ -50,7 +53,7 @@ func main() {
 	f, _ := os.OpenFile("./log/info.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	var conf = gin.LoggerConfig{
 		Formatter: func(param gin.LogFormatterParams) string {
-			return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,请求状态码:%d,响应时间:%s,客户端:%s，错误信息:%s\n",
+			return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,请求状态码:%d,响应时间:%s,客户端:%s，错误信息:%s, \n",
 				param.ClientIP,
 				param.TimeStamp.Format("2006年01月02日 15:04:05"),
 				param.Method,
@@ -59,6 +62,7 @@ func main() {
 				param.Latency,
 				param.Request.UserAgent(),
 				param.ErrorMessage,
+				//param.Request.Response.Body.Read,
 			)
 		},
 		//Output: io.MultiWriter(f),
@@ -73,6 +77,7 @@ func main() {
 	v1 := r.Group("/v1")
 	{
 		// 获取手机号
+		v1.POST("/login", api_v1.Login)
 		v1.GET("/get-balance", api_v1.GetBalance)
 		v1.GET("/get-all-project", api_v1.GetAllProject)
 		v1.GET("/get-sms", api_v1.GetSms)
