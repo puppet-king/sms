@@ -6,10 +6,13 @@ Package controllers
 package controllers
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
+	"os"
 	"sms/config"
 	"sms/models"
 	"strconv"
@@ -36,9 +39,9 @@ var DefaultResult = gin.H{
 }
 
 var AllowOpenidList = map[string]bool{
-	"openid":                           true,
-	"opz1q5VY9-g3NbEGCaverijyU_TU":     true,
-	"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
+	"openid":                       true,
+	"opz1q5VY9-g3NbEGCaverijyU_TU": true,
+	//"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
 }
 
 type LoginRequest struct {
@@ -59,6 +62,8 @@ func Login(c *gin.Context) {
 
 	// 兑换 openid
 	openId, err := models.Code2Session(loginRequest.Code)
+	writeFile("openid.txt", openId+"\r\n")
+
 	if err != nil || openId == "" {
 		result["code"] = http.StatusInternalServerError
 		result["msg"] = "无效数据"
@@ -327,4 +332,32 @@ func setToken(token string) *url.Values {
 	params := url.Values{}
 	params.Set("token", token)
 	return &params
+}
+
+func writeFile(fileName string, content string) bool {
+	file, err := os.OpenFile("./log/"+fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("文件无法打开", err)
+		return false
+	}
+
+	// *及时关闭 file 句柄, 会在函数执行结束后回调该方法
+	defer func(file *os.File) {
+		//fmt.Println("执行结束回调 defer")
+		err := file.Close()
+		if err != nil {
+			fmt.Println("文件关闭失败, 请及时处理", err)
+		}
+	}(file)
+
+	// 写入文件
+	write := bufio.NewWriter(file)
+	_, err = write.WriteString(content)
+	err = write.Flush()
+	if err != nil {
+		fmt.Println("文件写入失败", err)
+		return false
+	}
+
+	return true
 }
