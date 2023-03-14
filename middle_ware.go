@@ -31,7 +31,8 @@ func MiddleWare() gin.HandlerFunc {
 
 		// 校验 token 是否传递
 		result := controllers.DefaultResult
-		if token := c.GetHeader("Authorization"); token == "" || models.TokenVia(token) {
+
+		if token := c.GetHeader("Authorization"); token == "" || !models.TokenVia(token) {
 			result["code"] = http.StatusBadRequest
 			result["msg"] = "鉴权失败"
 			c.JSON(http.StatusForbidden, result)

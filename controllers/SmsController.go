@@ -45,7 +45,7 @@ type LoginRequest struct {
 
 func Login(c *gin.Context) {
 	result := DefaultResult
-	// 获取的是 code ！！
+	// 获取的是 code
 	loginRequest := LoginRequest{}
 	err := c.BindJSON(&loginRequest)
 	if err != nil || loginRequest.Code == "" {
@@ -63,8 +63,6 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusForbidden, result)
 		return
 	}
-
-	// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVuX2lkIjoiIiwiaXNzIjoic21zIiwic3ViIjoic21zTG9naW4iLCJleHAiOjE2Nzg3ODU3NTksIm5iZiI6MTY3ODY5OTM1OSwiaWF0IjoxNjc4Njk5MzU5fQ.Yhp9P4SOdqbrfe0s7YR-R98eSp3azqUa1hO6aECzU5o
 
 	user := models.User{OpenId: openId}
 	// 过滤无效用户列表

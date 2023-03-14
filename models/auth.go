@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"sms/config"
+	"strings"
 	"time"
 )
 
@@ -45,10 +46,12 @@ func GetToken(user User) (string, error) {
 }
 
 func TokenVia(tokenString string) bool {
+	tokenString = strings.Split(tokenString, "Bearer ")[1]
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(config.Cfg.ProjectToken), nil
 	})
 
+	fmt.Println(token.Valid)
 	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
 		fmt.Printf("%v %v", claims.OpenId, claims.RegisteredClaims.Issuer)
 		return true
