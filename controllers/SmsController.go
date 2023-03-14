@@ -36,7 +36,8 @@ var DefaultResult = gin.H{
 }
 
 var AllowOpenidList = map[string]bool{
-	"openid": true,
+	"openid":                       true,
+	"opz1q5VY9-g3NbEGCaverijyU_TU": true,
 }
 
 type LoginRequest struct {
@@ -66,7 +67,7 @@ func Login(c *gin.Context) {
 
 	user := models.User{OpenId: openId}
 	// 过滤无效用户列表
-	if _, ok := AllowOpenidList[user.OpenId]; ok {
+	if _, ok := AllowOpenidList[user.OpenId]; !ok {
 		result["code"] = http.StatusInternalServerError
 		result["msg"] = err.Error()
 		c.JSON(http.StatusForbidden, result)
