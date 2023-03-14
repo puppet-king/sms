@@ -19,6 +19,10 @@ func TestLoadConfig(t *testing.T) {
 		"1",
 		"2",
 		"root:1@/db?charset=utf8",
+		Wechat{
+			AppId:     "",
+			AppSecret: "",
+		},
 	}
 
 	tests := []struct {
