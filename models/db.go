@@ -105,7 +105,7 @@ func (s *SendPhoneNumberList) CancelSmsSend(requestId string) (rowsAffected int6
 func GetLastActivePhoneNumber(projectId int) (SendPhoneNumberList, error) {
 	var queryData SendPhoneNumberList
 
-	fmt.Println(projectId)
+	//fmt.Println(projectId)
 	err := DB.QueryRow("SELECT request_id RequestId, project_id ProjectId, area_code AreaCode, number Number, status Status, cancel_at CancelAt,  "+
 		"sms_code SmsCode FROM `send_phone_number_list` "+
 		"WHERE `status` = 0 AND project_id = ? ORDER BY id DESC LIMIT 1", projectId).
@@ -119,4 +119,18 @@ func GetLastActivePhoneNumber(projectId int) (SendPhoneNumberList, error) {
 	}
 
 	return queryData, nil
+}
+
+// GetDefaultCountryId 获取默认国家ID
+func GetDefaultCountryId() (int, bool) {
+	var countryId int
+	err := DB.QueryRow("SELECT country_id FROM `default_country` ORDER BY sort DESC LIMIT 1").Scan(&countryId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, false
+		}
+		return 0, false
+	}
+
+	return countryId, true
 }

@@ -13,7 +13,8 @@ import (
 )
 
 var AllowList = map[string]bool{
-	"/v1/login": true,
+	"/v1/login":       true,
+	"/v1/token-login": true,
 }
 
 func MiddleWare() gin.HandlerFunc {
@@ -31,7 +32,6 @@ func MiddleWare() gin.HandlerFunc {
 
 		// 校验 token 是否传递
 		result := controllers.DefaultResult
-
 		if token := c.GetHeader("Authorization"); token == "" || !models.TokenVia(token) {
 			result["code"] = http.StatusBadRequest
 			result["msg"] = "鉴权失败"

@@ -39,10 +39,11 @@ var DefaultResult = gin.H{
 }
 
 var AllowOpenidList = map[string]bool{
-	"openid":                       true,
-	"opz1q5VY9-g3NbEGCaverijyU_TU": true,
-	"opz1q5Vn8dwFsh2zrxU6s8bQwfwY": true,
-	"opz1q5esfV55VYlolpooTk-sNYjw": true,
+	"openid":                            true,
+	"opz1q5VY9-g3NbEGCaverijyU_TU":      true,
+	"opz1q5Vn8dwFsh2zrxU6s8bQwfwY":      true,
+	"opz1q5esfV55VYlolpooTk-sNYjw":      true,
+	"tokenOpz1q5esfV55VYlolpooTk-sNYjw": true,
 	//"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
 }
 
@@ -100,11 +101,63 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+type TokenRequest struct {
+	Token string `json:"token"`
+}
+
+// TokenLogin Token 登录
+func TokenLogin(c *gin.Context) {
+	result := DefaultResult
+	// 获取的是 code
+	loginRequest := TokenRequest{}
+	err := c.BindJSON(&loginRequest)
+	if err != nil || loginRequest.Token == "" {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = "服务器异常"
+		c.JSON(http.StatusInternalServerError, result)
+		return
+	}
+
+	user := models.User{OpenId: loginRequest.Token}
+	// 过滤无效用户列表
+	if _, ok := AllowOpenidList[user.OpenId]; !ok {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = err.Error()
+		c.JSON(http.StatusForbidden, result)
+		return
+	}
+
+	// 生成 token
+	token, err := models.GetToken(user)
+	if err != nil {
+		result["code"] = http.StatusInternalServerError
+		result["msg"] = err.Error()
+		c.JSON(http.StatusInternalServerError, result)
+		return
+	}
+
+	result["data"] = map[string]string{
+		"token":   token,
+		"open_id": user.OpenId,
+	}
+	result["code"] = 200
+	result["msg"] = "成功"
+	c.JSON(http.StatusOK, result)
+}
+
 // GetPhoneNumber 获取手机号码
 func GetPhoneNumber(c *gin.Context) {
 	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
-	params.Set("country_id", c.DefaultQuery("country_id", strconv.Itoa(CountryId)))
 	params.Set("project_id", c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
+
+	// 国家在接口无法获取时读取 DB 配置
+	countryId := c.Query("country_id")
+	if countryId == "" {
+		if defaultCountryId, ok := models.GetDefaultCountryId(); ok {
+			countryId = strconv.Itoa(defaultCountryId)
+		}
+	}
+	params.Set("country_id", countryId)
 
 	curl := models.BaseCurl{
 		Host:   HOST,
@@ -121,6 +174,11 @@ func GetPhoneNumber(c *gin.Context) {
 	//resp := "{\"code\":200,\"message\":\"Operation Success\",\"data\":{\"request_id\":\"230303101956721098368\",\"number\":\"12897129788\",\"area_code\":\"1\"}}"
 	s := ResultGetPhoneNumber{}
 	_ = json.Unmarshal([]byte(resp), &s)
+	if s.Code != 200 {
+		c.String(http.StatusInternalServerError, s.Message)
+		return
+	}
+
 	SendPhoneNumberList := models.SendPhoneNumberList{
 		RequestId: s.Data.RequestId,
 		ProjectId: c.DefaultQuery("project_id", strconv.Itoa(ProjectId)),

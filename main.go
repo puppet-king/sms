@@ -78,6 +78,7 @@ func main() {
 	{
 		// 获取手机号
 		v1.POST("/login", api_v1.Login)
+		v1.POST("/token-login", api_v1.TokenLogin)
 		v1.GET("/get-balance", api_v1.GetBalance)
 		v1.GET("/get-all-project", api_v1.GetAllProject)
 		v1.GET("/get-sms", api_v1.GetSms)
@@ -85,6 +86,13 @@ func main() {
 		v1.GET("/get-all-countries", api_v1.GetAllCountries)
 		v1.GET("/get-phone-number", api_v1.GetPhoneNumber)
 		v1.GET("/get-available-numbers", api_v1.GetAvailableNumbers)
+
+		// tool
+		toolGroup := v1.Group("/tool")
+		{
+			t := new(api_v1.ToolController)
+			toolGroup.GET("/check-db", t.CheckDb)
+		}
 	}
 
 	// 3.监听端口，默认在8080

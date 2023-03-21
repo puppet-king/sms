@@ -51,7 +51,6 @@ func TokenVia(tokenString string) bool {
 		return []byte(config.Cfg.ProjectToken), nil
 	})
 
-	fmt.Println(token.Valid)
 	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
 		fmt.Printf("%v %v", claims.OpenId, claims.RegisteredClaims.Issuer)
 		return true
