@@ -9,15 +9,16 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"time"
 )
 
-var DB *sql.DB
+var DB *sqlx.DB
 
 // InitDBConnectionPool 初始化DB连接池
-func InitDBConnectionPool(dataSourceName string) (*sql.DB, error) {
+func InitDBConnectionPool(dataSourceName string) (*sqlx.DB, error) {
 	// 连接 db
-	db, err := sql.Open("mysql", dataSourceName)
+	db, err := sqlx.Open("mysql", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +100,40 @@ func (s *SendPhoneNumberList) CancelSmsSend(requestId string) (rowsAffected int6
 	}
 
 	return rowsAffected
+}
+
+// SetSmsStatus 设置短信状态以及备注
+func (s *SendPhoneNumberList) SetSmsStatus(requestId string, status int, remark string) (rowsAffected int64) {
+	stmt, _ := DB.Prepare("UPDATE `send_phone_number_list` SET status = ?, " +
+		"cancel_at = ?, remark = ? WHERE request_id = ?")
+	res, err := stmt.Exec(
+		status,
+		time.Now().Format("2006-01-02 15:04:05"),
+		remark,
+		requestId,
+	)
+
+	if err == nil {
+		rowsAffected, _ = res.RowsAffected()
+	} else {
+		panic(err)
+	}
+
+	return rowsAffected
+}
+
+// GetListByStatus 根据状态查询列表
+func (s *SendPhoneNumberList) GetListByStatus(status int) ([]SendPhoneNumberList, error) {
+	var list []SendPhoneNumberList
+	err := DB.Select(&list, "SELECT request_id, project_id, area_code, number, status, cancel_at,  "+
+		"sms_code FROM `send_phone_number_list` "+
+		"WHERE `status` = ?", status)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }
 
 // GetLastActivePhoneNumber 获取最新一条可用手机号码

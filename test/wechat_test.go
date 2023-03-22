@@ -3,9 +3,10 @@
 /*
 Package models
 */
-package models
+package test
 
 import (
+	"sms/models"
 	"testing"
 )
 
@@ -28,7 +29,7 @@ func TestCode2Session(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Code2Session(tt.args.jsCode)
+			got, err := models.Code2Session(tt.args.jsCode)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Code2Session() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -49,7 +50,7 @@ func TestInitWechat(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			InitWechat()
+			models.InitWechat()
 		})
 	}
 }

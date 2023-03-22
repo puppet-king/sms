@@ -3,28 +3,29 @@
 /*
 Package controllers
 */
-package models
+package test
 
 import (
+	"sms/models"
 	"testing"
 )
 
 func TestGetToken(t *testing.T) {
 	initDb()
 	type args struct {
-		user User
+		user models.User
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
-		{"base", args{User{
+		{"base", args{models.User{
 			OpenId: "openid",
 		}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			GetToken(tt.args.user)
+			models.GetToken(tt.args.user)
 		})
 	}
 }
@@ -45,7 +46,7 @@ func TestTokenVia(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			TokenVia(tt.args.tokenString)
+			models.TokenVia(tt.args.tokenString)
 		})
 	}
 }

@@ -6,7 +6,9 @@ require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/golang-jwt/jwt/v5 v5.0.0-rc.1
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/medivhzhan/weapp/v3 v3.6.15
+	github.com/robfig/cron v1.2.0
 	gopkg.in/ini.v1 v1.67.0
 )
 

@@ -1,4 +1,11 @@
 // Copyright 2022 The wangkai. ALL rights reserved.
+/*
+	思考：随着接口继续写下去, 发现存在 controller 文件下的方法不能相同命令的问题, 导致写 api 命名很冗余,
+这个用 method 来实现; 紧接着又遇到需要声明各种结构的问题, 如果放置在 function 里面就不具备可复用,可如果不放,
+看起来就很混乱(还是我奇怪？), 这个时候需要想下复用的可能性, API 往往应该做成一个 service 层然后把对应 API 放置进去 ? 不太行因为
+万一要用里面的结构体就麻烦了，所以我觉得最好定义一个标准解决看起来很混乱的问题，例如 入参 出参标准化 [API | ][req|res]functionName
+
+*/
 
 /*
 Package controllers
@@ -101,6 +108,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// TokenRequest 入参结构体解析
 type TokenRequest struct {
 	Token string `json:"token"`
 }
@@ -167,7 +175,7 @@ func GetPhoneNumber(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -213,7 +221,7 @@ func GetSms(c *gin.Context) {
 		// 获取默认配置下的最新一条数据
 		row, err := models.GetLastActivePhoneNumber(ProjectId)
 		if err != nil || row.RequestId == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "requestId 参数缺失"})
+			c.String(http.StatusBadRequest, "requestId 参数缺失")
 			return
 		}
 		requestId = row.RequestId
@@ -229,12 +237,16 @@ func GetSms(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	var s ResultGetSms
 	_ = json.Unmarshal([]byte(resp), &s)
+	if s.Code != 200 {
+		c.String(http.StatusInternalServerError, s.Message)
+		return
+	}
 
 	// 修改短信信息 TODO 没有做异常处理
 	table := models.SendPhoneNumberList{
@@ -246,6 +258,7 @@ func GetSms(c *gin.Context) {
 	c.String(http.StatusOK, resp)
 }
 
+// ResultCancelRequest 返回 CancelRequest 请求 API 结构体
 type ResultCancelRequest struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -259,7 +272,7 @@ func CancelRequest(c *gin.Context) {
 		// 获取默认配置下的最新一条数据
 		row, err := models.GetLastActivePhoneNumber(ProjectId)
 		if err != nil || row.RequestId == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "requestId 参数缺失"})
+			c.String(http.StatusBadRequest, "requestId 参数缺失")
 			return
 		}
 		requestId = row.RequestId
@@ -274,14 +287,15 @@ func CancelRequest(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	var s ResultCancelRequest
 	_ = json.Unmarshal([]byte(resp), &s)
+	// 这个 返回有待商榷
 	if s.Code == 50103 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": requestId + "已经过期无法使用"})
+		c.String(http.StatusBadRequest, requestId+"已经过期无法使用")
 		return
 	}
 
@@ -304,7 +318,7 @@ func GetBalance(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -321,7 +335,7 @@ func GetAllProject(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -338,13 +352,14 @@ func GetAllCountries(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	c.String(http.StatusBadRequest, resp)
 }
 
+// AvailableCountries 可用国家返回结构子集
 type AvailableCountries struct {
 	CountryId  int     `json:"country_id"`
 	ProjectId  int     `json:"project_id"`
@@ -352,6 +367,7 @@ type AvailableCountries struct {
 	TotalCount int     `json:"total_count"`
 }
 
+// AvailableCountriesData 可用国家返回结构
 type AvailableCountriesData struct {
 	Code    int                           `json:"code"`
 	Message string                        `json:"message"`
@@ -372,7 +388,7 @@ func GetAvailableNumbers(c *gin.Context) {
 
 	resp, err := curl.GET()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -388,12 +404,14 @@ func GetAvailableNumbers(c *gin.Context) {
 	c.JSON(http.StatusBadRequest, data)
 }
 
+// setToken 设置 bus token, 解决请求 API 鉴权的问题
 func setToken(token string) *url.Values {
 	params := url.Values{}
 	params.Set("token", token)
 	return &params
 }
 
+// writeFile 写入文件, 解决记录 openid 做白名单的问题
 func writeFile(fileName string, content string) bool {
 	file, err := os.OpenFile("./log/"+fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

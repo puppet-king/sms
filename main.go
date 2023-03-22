@@ -8,14 +8,17 @@ package main
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron"
 	"io"
 	"os"
 	"sms/config"
+	"sms/console"
 	api_v1 "sms/controllers"
 	"sms/models"
+	"time"
 )
 
-// EnvMode
+// SmsEnvMode 设置环境变量
 const SmsEnvMode = "SMS_ENV_MODE"
 
 func init() {
@@ -40,12 +43,22 @@ func main() {
 	// 连接数据库
 	defer db.Close()
 
+	// 开启 job 协程
+	go cronJob()
+
+	// web 服务
+	web()
+
+}
+
+// web WEB 服务
+func web() {
 	// 创建路由
 	r := gin.New()
 	// 使用中间件来将 配置文件、 db 对象保存到 context.Context 对象中
 	r.Use(func(c *gin.Context) {
-		c.Set("privateConfig", cfg)
-		c.Set("db", db)
+		c.Set("privateConfig", config.Cfg)
+		c.Set("db", models.DB)
 		c.Next()
 	})
 
@@ -98,4 +111,24 @@ func main() {
 	// 3.监听端口，默认在8080
 	// Run("里面不指定端口号默认为8080")
 	r.Run(":9090")
+}
+
+// cron 定时服务
+func cronJob() {
+	c := cron.New()
+	defer c.Stop()
+	// 每秒检查一次
+	spec := "*/5 * * * * ?"
+	err := c.AddFunc(spec, func() {
+		s := new(console.Sms)
+		s.ExecTime = time.Now()
+		s.AutoCancel()
+		fmt.Println("执行结束", "耗时:", time.Since(s.ExecTime).Seconds())
+	})
+	if err != nil {
+		fmt.Errorf("AddFunc error : %v", err)
+		return
+	}
+	c.Start()
+	select {}
 }

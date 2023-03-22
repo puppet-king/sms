@@ -3,10 +3,11 @@
 /*
 Package config
 */
-package config
+package test
 
 import (
 	"reflect"
+	config2 "sms/config"
 	"testing"
 )
 
@@ -15,11 +16,11 @@ func TestLoadConfig(t *testing.T) {
 		name string
 	}
 
-	config := &PrivateConfig{
+	config := &config2.PrivateConfig{
 		"1",
 		"2",
 		"root:1@/db?charset=utf8",
-		Wechat{
+		config2.Wechat{
 			AppId:     "",
 			AppSecret: "",
 		},
@@ -28,7 +29,7 @@ func TestLoadConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *PrivateConfig
+		want    *config2.PrivateConfig
 		wantErr bool
 	}{
 		{"error_file", args{"1234"}, config, true},
@@ -36,7 +37,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := LoadConfig(tt.args.name)
+			got, err := config2.LoadConfig(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
