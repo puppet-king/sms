@@ -28,15 +28,32 @@ func (s Sms) AutoCancel() {
 	sms := models.SendPhoneNumberList{}
 	list, err := sms.GetListByStatus(0)
 	if err != nil {
-		fmt.Println("脚本异常")
+		fmt.Println(err)
 		return
 	}
 
 	// 处理数据
+	// 更改时区
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println("时区设置不正确：", err)
+		return
+	}
+
 	// 请求 API 应该在封装下的
 	params := setToken(config.Cfg.ApiKey)
 	for _, j := range list {
 		if j.RequestId == "" {
+			continue
+		}
+
+		createTime, err := time.ParseInLocation("2006-01-02 15:04:05", j.CreateAt, loc)
+		if err != nil {
+			continue
+		}
+
+		// 小于 4分钟无需取消
+		if time.Since(createTime).Minutes() <= 4 {
 			continue
 		}
 

@@ -43,6 +43,7 @@ type SendPhoneNumberList struct {
 	Status    int    `db:"status"`
 	CancelAt  string `db:"cancel_at"`
 	SmsCode   string `db:"sms_code"`
+	CreateAt  string `db:"create_at"`
 }
 
 // Insert 插入数据
@@ -126,7 +127,7 @@ func (s *SendPhoneNumberList) SetSmsStatus(requestId string, status int, remark 
 func (s *SendPhoneNumberList) GetListByStatus(status int) ([]SendPhoneNumberList, error) {
 	var list []SendPhoneNumberList
 	err := DB.Select(&list, "SELECT request_id, project_id, area_code, number, status, cancel_at,  "+
-		"sms_code FROM `send_phone_number_list` "+
+		"sms_code, create_at FROM `send_phone_number_list` "+
 		"WHERE `status` = ?", status)
 
 	if err != nil {

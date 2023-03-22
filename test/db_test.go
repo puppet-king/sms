@@ -165,7 +165,8 @@ func TestSendPhoneNumberList_UpdateSmsSendSuccessStatus(t *testing.T) {
 }
 
 func initDb() {
-	cfg, _ := config.LoadConfig("../config/private_config_test.ini")
+	//cfg, _ := config.LoadConfig("../config/private_config_test.ini")
+	cfg, _ := config.LoadConfig("../private_config.ini")
 	_, _ = models.InitDBConnectionPool(cfg.Database)
 	models.InitWechat()
 }
