@@ -51,6 +51,7 @@ var AllowOpenidList = map[string]bool{
 	"opz1q5Vn8dwFsh2zrxU6s8bQwfwY":      true,
 	"opz1q5esfV55VYlolpooTk-sNYjw":      true,
 	"tokenOpz1q5esfV55VYlolpooTk-sNYjw": true,
+	"opz1q5SbC_24YTB_4pvYGf8NG_lE":      true,
 	//"031qsd0w3rHBh03iSN3w3kjjnF1qsd0m": true,
 }
 
