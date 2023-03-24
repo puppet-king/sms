@@ -158,11 +158,14 @@ func GetPhoneNumber(c *gin.Context) {
 	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
 	params.Set("project_id", c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
 
-	// 国家在接口无法获取时读取 DB 配置
+	// 国家在接口没有传递时读取 DB 配置 （大多数情况）
 	countryId := c.Query("country_id")
 	if countryId == "" {
-		if defaultCountryId, ok := models.GetDefaultCountryId(); ok {
+		projectId, _ := strconv.Atoi(c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
+		if defaultCountryId, ok := models.GetDefaultCountryId(projectId); ok {
 			countryId = strconv.Itoa(defaultCountryId)
+		} else {
+			countryId = strconv.Itoa(CountryId)
 		}
 	}
 	params.Set("country_id", countryId)
@@ -395,8 +398,10 @@ func GetAvailableNumbers(c *gin.Context) {
 	var s AvailableCountriesData
 	_ = json.Unmarshal([]byte(resp), &s)
 	data := AvailableCountries{}
+
+	projectId, _ := strconv.Atoi(c.DefaultQuery("project_id", strconv.Itoa(ProjectId)))
 	for k, v := range s.Data {
-		if v.ProjectId == ProjectId {
+		if v.ProjectId == projectId {
 			data = s.Data[k]
 		}
 	}

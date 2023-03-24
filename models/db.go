@@ -157,10 +157,10 @@ func GetLastActivePhoneNumber(projectId int) (SendPhoneNumberList, error) {
 	return queryData, nil
 }
 
-// GetDefaultCountryId 获取默认国家ID
-func GetDefaultCountryId() (int, bool) {
+// GetDefaultCountryId 根据条件获取默认国家ID
+func GetDefaultCountryId(projectId int) (int, bool) {
 	var countryId int
-	err := DB.QueryRow("SELECT country_id FROM `default_country` ORDER BY sort DESC LIMIT 1").Scan(&countryId)
+	err := DB.QueryRow("SELECT country_id FROM `default_country` WHERE project_id = ? ORDER BY sort DESC LIMIT 1", projectId).Scan(&countryId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, false
