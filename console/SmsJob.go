@@ -16,11 +16,13 @@ import (
 )
 
 const HOST = "https://sms-bus.com"
+const TimeoutMinutes = 4
 
 type Sms struct {
 	ExecTime time.Time // 执行时间
 }
 
+// AutoCancel 自动取消短信
 func (s Sms) AutoCancel() {
 	// 获取参数 暂时不实现
 
@@ -53,7 +55,7 @@ func (s Sms) AutoCancel() {
 		}
 
 		// 小于 4分钟无需取消
-		if time.Since(createTime).Minutes() <= 4 {
+		if time.Since(createTime).Minutes() <= TimeoutMinutes {
 			continue
 		}
 
@@ -78,6 +80,70 @@ func (s Sms) AutoCancel() {
 		} else {
 			sms.SetSmsStatus(j.RequestId, 3, s.Message)
 		}
+	}
+}
+
+// AutoSmsCode 自动获取短信验证码
+func (s Sms) AutoSmsCode() {
+	// 获取数据
+	sms := models.SendPhoneNumberList{}
+	list, err := sms.GetListByStatus(0)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// 处理数据
+	// 更改时区
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println("时区设置不正确：", err)
+		return
+	}
+
+	// 请求 API 应该在封装下的
+	params := setToken(config.Cfg.ApiKey)
+	for _, j := range list {
+		if j.RequestId == "" {
+			continue
+		}
+
+		createTime, err := time.ParseInLocation("2006-01-02 15:04:05", j.CreateAt, loc)
+		if err != nil {
+			continue
+		}
+
+		// 大于 4分钟无需取消
+		if time.Since(createTime).Minutes() > TimeoutMinutes {
+			continue
+		}
+
+		params.Set("request_id", j.RequestId)
+		curl := models.BaseCurl{
+			Host:   HOST,
+			Path:   "/api/control/get/sms",
+			Params: params,
+		}
+
+		resp, err := curl.GET()
+		if err != nil {
+			fmt.Println("auto sms error")
+			continue
+		}
+
+		var s controllers.ResultGetSms
+		_ = json.Unmarshal([]byte(resp), &s)
+		if s.Code != 200 {
+			fmt.Println("auto sms error")
+			continue
+		}
+
+		// 修改短信信息 TODO 没有做异常处理
+		table := models.SendPhoneNumberList{
+			RequestId: j.RequestId,
+			SmsCode:   s.Data,
+		}
+		table.UpdateSmsSendSuccessStatus()
 	}
 }
 

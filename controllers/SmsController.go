@@ -23,6 +23,7 @@ import (
 	"sms/config"
 	"sms/models"
 	"strconv"
+	"time"
 )
 
 const HOST = "https://sms-bus.com"
@@ -193,6 +194,7 @@ func GetPhoneNumber(c *gin.Context) {
 
 	SendPhoneNumberList := models.SendPhoneNumberList{
 		RequestId: s.Data.RequestId,
+		UserId:    c.MustGet("userId").(string),
 		ProjectId: c.DefaultQuery("project_id", strconv.Itoa(ProjectId)),
 		AreaCode:  c.DefaultQuery("country_id", strconv.Itoa(CountryId)),
 		Number:    s.Data.Number,
@@ -221,6 +223,7 @@ type ResultGetSms struct {
 func GetSms(c *gin.Context) {
 	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
 	requestId := c.DefaultQuery("request_id", "0")
+	fmt.Println(requestId)
 	if requestId == "0" {
 		// 获取默认配置下的最新一条数据
 		row, err := models.GetLastActivePhoneNumber(ProjectId)
@@ -408,6 +411,59 @@ func GetAvailableNumbers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusBadRequest, data)
+}
+
+type ReqGetAvailableNumbersByUid struct {
+	models.SendPhoneNumberList
+	RefreshTime string
+}
+
+// GetAvailableNumbersByUid 根据 uid 获取可用号码
+func GetAvailableNumbersByUid(c *gin.Context) {
+	result := DefaultResult
+
+	// 获取数据
+	sms := models.SendPhoneNumberList{}
+	list, err := sms.GetListByUid(c.MustGet("userId").(string))
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// 处理数据
+	// 更改时区
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println("时区设置不正确：", err)
+		return
+	}
+
+	var res []ReqGetAvailableNumbersByUid
+	for _, v := range list {
+		createTime, err := time.ParseInLocation("2006-01-02 15:04:05", v.CreateAt, loc)
+		if err != nil {
+			continue
+		}
+
+		var refreshTime = ""
+		seconds := time.Since(createTime).Seconds()
+		if seconds < 60 {
+			refreshTime = strconv.Itoa(int(seconds)) + "秒前"
+		} else {
+			refreshTime = strconv.Itoa(int(seconds/60)) + "分钟前"
+		}
+
+		res = append(res, ReqGetAvailableNumbersByUid{
+			v,
+			refreshTime,
+		})
+	}
+
+	result["code"] = 200
+	result["msg"] = "成功"
+	result["data"] = res
+	c.JSON(http.StatusOK, result)
+	return
 }
 
 // setToken 设置 bus token, 解决请求 API 鉴权的问题

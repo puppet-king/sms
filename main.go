@@ -66,14 +66,14 @@ func web() {
 	f, _ := os.OpenFile("./log/info.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	var conf = gin.LoggerConfig{
 		Formatter: func(param gin.LogFormatterParams) string {
-			return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,请求状态码:%d,响应时间:%s,客户端:%s，错误信息:%s, \n",
+			return fmt.Sprintf("客户端IP:%s,请求时间:[%s],请求方式:%s,请求地址:%s,请求状态码:%d,响应时间:%s,错误信息:%s, \n",
 				param.ClientIP,
 				param.TimeStamp.Format("2006年01月02日 15:04:05"),
 				param.Method,
 				param.Path,
 				param.StatusCode,
 				param.Latency,
-				param.Request.UserAgent(),
+				//param.Request.UserAgent(),
 				param.ErrorMessage,
 				//param.Request.Response.Body.Read,
 			)
@@ -99,6 +99,7 @@ func web() {
 		v1.GET("/get-all-countries", api_v1.GetAllCountries)
 		v1.GET("/get-phone-number", api_v1.GetPhoneNumber)
 		v1.GET("/get-available-numbers", api_v1.GetAvailableNumbers)
+		v1.GET("/get-available-numbers-by-uid", api_v1.GetAvailableNumbersByUid)
 
 		// tool
 		toolGroup := v1.Group("/tool")
@@ -123,6 +124,7 @@ func cronJob() {
 		s := new(console.Sms)
 		s.ExecTime = time.Now()
 		s.AutoCancel()
+		s.AutoSmsCode()
 		fmt.Println("执行结束", "耗时:", time.Since(s.ExecTime).Seconds())
 	})
 	if err != nil {

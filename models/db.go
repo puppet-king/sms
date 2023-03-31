@@ -38,6 +38,7 @@ func InitDBConnectionPool(dataSourceName string) (*sqlx.DB, error) {
 type SendPhoneNumberList struct {
 	RequestId string `db:"request_id"`
 	ProjectId string `db:"project_id"`
+	UserId    string `db:"user_id"`
 	AreaCode  string `db:"area_code"`
 	Number    string `db:"number"`
 	Status    int    `db:"status"`
@@ -49,16 +50,17 @@ type SendPhoneNumberList struct {
 // Insert 插入数据
 func (s *SendPhoneNumberList) Insert() (int64, error) {
 	// 该死必须全部匹配
-	stmt, _ := DB.Prepare("INSERT INTO send_phone_number_list ( `request_id`, `area_code`, `number`, `status`, `project_id` )" +
-		"VALUES (?, ?, ?, ?, ?) ")
-	dateTime := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(dateTime)
+	stmt, _ := DB.Prepare("INSERT INTO send_phone_number_list ( `request_id`, `area_code`, `number`, `status`, `project_id`, `user_id` )" +
+		"VALUES (?, ?, ?, ?, ?, ?) ")
+	//dateTime := time.Now().Format("2006-01-02 15:04:05")
+	//fmt.Println(dateTime)
 	res, err := stmt.Exec(
 		s.RequestId,
 		s.AreaCode,
 		s.Number,
 		s.Status,
 		s.ProjectId,
+		s.UserId,
 	)
 
 	if err == nil {
@@ -126,7 +128,7 @@ func (s *SendPhoneNumberList) SetSmsStatus(requestId string, status int, remark 
 // GetListByStatus 根据状态查询列表
 func (s *SendPhoneNumberList) GetListByStatus(status int) ([]SendPhoneNumberList, error) {
 	var list []SendPhoneNumberList
-	err := DB.Select(&list, "SELECT request_id, project_id, area_code, number, status, cancel_at,  "+
+	err := DB.Select(&list, "SELECT request_id, project_id, user_id, area_code, number, status, cancel_at,  "+
 		"sms_code, create_at FROM `send_phone_number_list` "+
 		"WHERE `status` = ?", status)
 
@@ -137,7 +139,27 @@ func (s *SendPhoneNumberList) GetListByStatus(status int) ([]SendPhoneNumberList
 	return list, nil
 }
 
-// GetLastActivePhoneNumber 获取最新一条可用手机号码
+// GetListByUid 获取指定用户的合法 status
+func (s *SendPhoneNumberList) GetListByUid(userId string) ([]SendPhoneNumberList, error) {
+	var list []SendPhoneNumberList
+	// 计算当前时间减去 4 分钟后的时间
+	now := time.Now()
+	before4Minutes := now.Add(-4 * time.Minute)
+	//before4Minutes := now.Add(-1000 * time.Minute)
+	formatted := before4Minutes.Format("2006-01-02 15:04:05")
+	err := DB.Select(&list, "SELECT request_id, project_id, user_id, area_code, number, status, cancel_at,  "+
+		"sms_code, create_at FROM `send_phone_number_list` "+
+		"WHERE `status` IN (0,1) AND user_id = ? AND create_at >= ? ORDER BY create_at DESC LIMIT 100",
+		userId, formatted)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
+}
+
+// GetLastActivePhoneNumber 获取最新一条可用手机号码 以前的写法 没用 sqlx 哎
 func GetLastActivePhoneNumber(projectId int) (SendPhoneNumberList, error) {
 	var queryData SendPhoneNumberList
 
@@ -165,6 +187,8 @@ func GetDefaultCountryId(projectId int) (int, bool) {
 		if err == sql.ErrNoRows {
 			return 0, false
 		}
+
+		fmt.Println(err)
 		return 0, false
 	}
 

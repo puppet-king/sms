@@ -30,7 +30,7 @@ func (b BaseCurl) GET() (string, error) {
 		fmt.Printf("failed, err:%v \n", err)
 		return "", err
 	}
-	fmt.Println(b.Params)
+	//fmt.Println(b.Params)
 	u.RawQuery = b.Params.Encode() // URL encode
 	resp, err := http.Get(u.String())
 	if err != nil {

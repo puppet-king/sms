@@ -32,9 +32,19 @@ func MiddleWare() gin.HandlerFunc {
 
 		// 校验 token 是否传递
 		result := controllers.DefaultResult
-		if token := c.GetHeader("Authorization"); token == "" || !models.TokenVia(token) {
+		if token := c.GetHeader("Authorization"); token != "" {
+			if ok, openId := models.TokenVia(token); ok {
+				c.Set("userId", openId)
+			} else {
+				result["code"] = http.StatusBadRequest
+				result["msg"] = "鉴权失败-1"
+				c.JSON(http.StatusForbidden, result)
+				c.Abort()
+				return
+			}
+		} else {
 			result["code"] = http.StatusBadRequest
-			result["msg"] = "鉴权失败"
+			result["msg"] = "鉴权失败-null"
 			c.JSON(http.StatusForbidden, result)
 			c.Abort()
 			return

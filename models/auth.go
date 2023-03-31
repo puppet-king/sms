@@ -45,17 +45,18 @@ func GetToken(user User) (string, error) {
 	return ss, nil
 }
 
-func TokenVia(tokenString string) bool {
+// TokenVia 校验 token 并且返回对应用户唯一标识 (当前是 openid)
+func TokenVia(tokenString string) (bool, string) {
 	tokenString = strings.Split(tokenString, "Bearer ")[1]
 	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(config.Cfg.ProjectToken), nil
 	})
 
 	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
-		fmt.Printf("%v %v", claims.OpenId, claims.RegisteredClaims.Issuer)
-		return true
+		//fmt.Printf("%v %v", claims.OpenId, claims.RegisteredClaims.Issuer)
+		return true, claims.OpenId
 	} else {
 		fmt.Println(err)
-		return false
+		return false, ""
 	}
 }

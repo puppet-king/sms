@@ -80,10 +80,13 @@ func TestSendPhoneNumberList_CancelSmsSend(t *testing.T) {
 }
 
 func TestSendPhoneNumberList_Insert(t *testing.T) {
+	initDb()
+
 	type fields struct {
 		RequestId string
 		ProjectId string
 		AreaCode  string
+		UserId    string
 		Number    string
 		Status    int
 		CancelAt  string
@@ -94,19 +97,18 @@ func TestSendPhoneNumberList_Insert(t *testing.T) {
 		fields fields
 	}{
 		{"insert", fields{
-			RequestId: "2303031019567210983611", // 唯一索引重复测试会冲突
+			RequestId: "2303031019567210983612", // 唯一索引重复测试会冲突
 			ProjectId: "42",
 			AreaCode:  "1",
 			Number:    "12897129788",
 			Status:    0,
 			CancelAt:  "",
-			SmsCode:   "",
+			SmsCode:   "1234",
+			UserId:    "测试一下",
 		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			initDb()
-
 			s := &models.SendPhoneNumberList{
 				RequestId: tt.fields.RequestId,
 				ProjectId: tt.fields.ProjectId,
@@ -115,8 +117,11 @@ func TestSendPhoneNumberList_Insert(t *testing.T) {
 				Status:    tt.fields.Status,
 				CancelAt:  tt.fields.CancelAt,
 				SmsCode:   tt.fields.SmsCode,
+				UserId:    tt.fields.UserId,
 			}
-			s.Insert()
+			_, _ = s.Insert()
+
+			//fmt.Println(err.Error())
 		})
 	}
 }
@@ -200,7 +205,7 @@ func TestSendPhoneNumberList_GetListByStatus(t *testing.T) {
 			Status:    0,
 			CancelAt:  "",
 			SmsCode:   "",
-		}, args{status: 2}, []models.SendPhoneNumberList{}, false},
+		}, args{status: 3}, []models.SendPhoneNumberList{}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
