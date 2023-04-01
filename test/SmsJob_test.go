@@ -32,3 +32,24 @@ func TestSms_autoCancel(t *testing.T) {
 		})
 	}
 }
+
+func TestSms_AutoSmsCode(t *testing.T) {
+	initDb()
+	type fields struct {
+		ExecTime time.Time
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{"base", fields{ExecTime: time.Now()}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := console.Sms{
+				ExecTime: tt.fields.ExecTime,
+			}
+			s.AutoSmsCode()
+		})
+	}
+}

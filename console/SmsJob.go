@@ -8,6 +8,7 @@ package console
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"sms/config"
 	"sms/controllers"
@@ -87,7 +88,7 @@ func (s Sms) AutoCancel() {
 func (s Sms) AutoSmsCode() {
 	// 获取数据
 	sms := models.SendPhoneNumberList{}
-	list, err := sms.GetListByStatus(0)
+	list, err := sms.GetListByStatus(3)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -115,8 +116,20 @@ func (s Sms) AutoSmsCode() {
 
 		// 大于 4分钟无需取消
 		if time.Since(createTime).Minutes() > TimeoutMinutes {
-			continue
+			//continue
 		}
+
+		// 小于 10s 无需处理（大概率没有抓取到）
+		if time.Since(createTime).Seconds() <= 10 {
+			//continue
+		}
+
+		// 定时延迟机制 0 ~ 10 s 分别获取
+		//now := time.Now()
+		rand.Seed(time.Now().UnixNano())
+		millisecond := rand.Intn(10)
+		time.Sleep(time.Duration(millisecond) * time.Second)
+		//fmt.Println("触发延迟逻辑:", time.Since(now).Seconds())
 
 		params.Set("request_id", j.RequestId)
 		curl := models.BaseCurl{
@@ -127,7 +140,7 @@ func (s Sms) AutoSmsCode() {
 
 		resp, err := curl.GET()
 		if err != nil {
-			fmt.Println("auto sms error")
+			fmt.Println("auto sms error", err.Error())
 			continue
 		}
 
@@ -139,11 +152,11 @@ func (s Sms) AutoSmsCode() {
 		}
 
 		// 修改短信信息 TODO 没有做异常处理
-		table := models.SendPhoneNumberList{
-			RequestId: j.RequestId,
-			SmsCode:   s.Data,
-		}
-		table.UpdateSmsSendSuccessStatus()
+		//table := models.SendPhoneNumberList{
+		//	RequestId: j.RequestId,
+		//	SmsCode:   s.Data,
+		//}
+		//table.UpdateSmsSendSuccessStatus()
 	}
 }
 
