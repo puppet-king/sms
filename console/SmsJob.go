@@ -88,7 +88,7 @@ func (s Sms) AutoCancel() {
 func (s Sms) AutoSmsCode() {
 	// 获取数据
 	sms := models.SendPhoneNumberList{}
-	list, err := sms.GetListByStatus(3)
+	list, err := sms.GetListByStatus(0)
 	if err != nil {
 		fmt.Println(err)
 		return
