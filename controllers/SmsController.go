@@ -74,18 +74,18 @@ func Login(c *gin.Context) {
 
 	// 兑换 openid
 	openId, err := models.Code2Session(loginRequest.Code)
-	//writeFile("openid.txt", openId+"\r\n")
-	cache := models.Cache{}
-	loginList := cache.GetLastLoginInfo()
-	loginList[openId] = time.Now().Format("2006-01-02 15:04:05")
-	cache.Set("sms:user:loginInfo", loginList, 0)
-
 	if err != nil || openId == "" {
 		result["code"] = http.StatusInternalServerError
 		result["msg"] = "无效数据"
 		c.JSON(http.StatusForbidden, result)
 		return
 	}
+
+	//writeFile("openid.txt", openId+"\r\n")
+	cache := models.NewCache()
+	loginList := cache.GetLastLoginInfo()
+	loginList[openId] = time.Now().Format("2006-01-02 15:04:05")
+	cache.Set("sms:user:loginInfo", loginList, 0)
 
 	user := models.User{OpenId: openId}
 

@@ -80,11 +80,11 @@ func (c *Cache) GetAllowList() map[string]bool {
 // GetLastLoginInfo 获取允许列表
 func (c *Cache) GetLastLoginInfo() map[string]string {
 	newCache := NewCache()
-	if data, ok := newCache.Get("sms:user:allowList"); ok {
+	if data, ok := newCache.Get("sms:user:loginInfo"); ok {
 		if allowOpenidList, ok := data.(map[string]string); ok {
 			return allowOpenidList
 		}
 	}
 
-	return map[string]string{}
+	return make(map[string]string)
 }
