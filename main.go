@@ -43,11 +43,13 @@ func main() {
 	// 连接数据库
 	defer db.Close()
 
-	// 开启 job 协程
-	//go cronJob()
+	// 开启 job 协程  并且是正式环境
+	if gin.ReleaseMode == os.Getenv(SmsEnvMode) {
+		go cronJob()
+	}
 
 	// 加载缓存
-	cache := models.Cache{}
+	cache := models.NewCache()
 	cache.SetAllowList()
 
 	// web 服务
