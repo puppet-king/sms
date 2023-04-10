@@ -33,3 +33,50 @@ func (t ToolController) CheckDb(c *gin.Context) {
 	result["data"] = dbMsg
 	c.JSON(http.StatusOK, result)
 }
+
+// SetCache 设置缓存
+func (t ToolController) SetCache(c *gin.Context) {
+	result := DefaultResult
+
+	cache := models.NewCache()
+	cache.SetAllowList()
+	result["code"] = 200
+	result["msg"] = "成功"
+	c.JSON(http.StatusOK, result)
+}
+
+// GetCache 获取缓存
+func (t ToolController) GetCache(c *gin.Context) {
+	result := DefaultResult
+	cache := models.NewCache()
+
+	if data, ok := cache.Get("sms:user:allowList"); ok {
+		if allowOpenidList, ok := data.(map[string]bool); ok {
+			result["data"] = allowOpenidList
+			c.JSON(http.StatusOK, result)
+			return
+		}
+	}
+
+	result["code"] = 50001
+	result["msg"] = "暂无数据"
+	c.JSON(http.StatusOK, result)
+}
+
+// GetLastLoginInfo 获取登录人员 openid
+func (t ToolController) GetLastLoginInfo(c *gin.Context) {
+	result := DefaultResult
+	cache := models.NewCache()
+
+	if data, ok := cache.Get("sms:user:loginInfo"); ok {
+		if allowOpenidList, ok := data.(map[string]string); ok {
+			result["data"] = allowOpenidList
+			c.JSON(http.StatusOK, result)
+			return
+		}
+	}
+
+	result["code"] = 50001
+	result["msg"] = "暂无数据"
+	c.JSON(http.StatusOK, result)
+}

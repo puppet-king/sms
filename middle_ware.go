@@ -34,6 +34,16 @@ func MiddleWare() gin.HandlerFunc {
 		result := controllers.DefaultResult
 		if token := c.GetHeader("Authorization"); token != "" {
 			if ok, openId := models.TokenVia(token); ok {
+				cache := models.NewCache()
+				allowOpenidList := cache.GetAllowList()
+				if _, ok := allowOpenidList[openId]; !ok {
+					result["code"] = http.StatusBadRequest
+					result["msg"] = "鉴权失败-2"
+					c.JSON(http.StatusForbidden, result)
+					c.Abort()
+					return
+				}
+
 				c.Set("userId", openId)
 			} else {
 				result["code"] = http.StatusBadRequest

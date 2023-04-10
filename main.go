@@ -44,7 +44,11 @@ func main() {
 	defer db.Close()
 
 	// 开启 job 协程
-	go cronJob()
+	//go cronJob()
+
+	// 加载缓存
+	cache := models.Cache{}
+	cache.SetAllowList()
 
 	// web 服务
 	web()
@@ -106,6 +110,9 @@ func web() {
 		{
 			t := new(api_v1.ToolController)
 			toolGroup.GET("/check-db", t.CheckDb)
+			toolGroup.GET("/set-cache", t.SetCache)
+			toolGroup.GET("/get-cache", t.GetCache)
+			toolGroup.GET("/get-last-login-info", t.GetLastLoginInfo)
 		}
 	}
 

@@ -233,3 +233,33 @@ func TestSendPhoneNumberList_GetListByStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestTableUser_List(t1 *testing.T) {
+	initDb()
+	type fields struct {
+		UserId string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []models.TableUser
+	}{
+		{"base", fields{}, []models.TableUser{}},
+	}
+	for _, tt := range tests {
+		t1.Run(tt.name, func(t1 *testing.T) {
+			t := models.TableUser{
+				UserId: tt.fields.UserId,
+			}
+
+			got := t.List()
+
+			var allowOpenidList = make(map[string]bool)
+			for _, v := range got {
+				fmt.Println(v.UserId)
+				allowOpenidList[v.UserId] = true
+			}
+
+		})
+	}
+}

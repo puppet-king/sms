@@ -194,3 +194,19 @@ func GetDefaultCountryId(projectId int) (int, bool) {
 
 	return countryId, true
 }
+
+// TableUser SendPhoneNumber table send_phone_number_list
+type TableUser struct {
+	UserId string `db:"user_id"`
+}
+
+func (t TableUser) List() []TableUser {
+	var user []TableUser
+
+	err := DB.Select(&user, "SELECT user_id FROM `user` WHERE status = 1")
+	if err != nil {
+		return user
+	}
+
+	return user
+}

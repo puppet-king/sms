@@ -74,7 +74,11 @@ func Login(c *gin.Context) {
 
 	// 兑换 openid
 	openId, err := models.Code2Session(loginRequest.Code)
-	writeFile("openid.txt", openId+"\r\n")
+	//writeFile("openid.txt", openId+"\r\n")
+	cache := models.Cache{}
+	loginList := cache.GetLastLoginInfo()
+	loginList[openId] = time.Now().Format("2006-01-02 15:04:05")
+	cache.Set("sms:user:loginInfo", loginList, 0)
 
 	if err != nil || openId == "" {
 		result["code"] = http.StatusInternalServerError
@@ -84,8 +88,10 @@ func Login(c *gin.Context) {
 	}
 
 	user := models.User{OpenId: openId}
+
 	// 过滤无效用户列表
-	if _, ok := AllowOpenidList[user.OpenId]; !ok {
+	allowOpenidList := cache.GetAllowList()
+	if _, ok := allowOpenidList[user.OpenId]; !ok {
 		result["code"] = http.StatusInternalServerError
 		result["msg"] = err.Error()
 		c.JSON(http.StatusForbidden, result)
@@ -129,8 +135,11 @@ func TokenLogin(c *gin.Context) {
 	}
 
 	user := models.User{OpenId: loginRequest.Token}
+
 	// 过滤无效用户列表
-	if _, ok := AllowOpenidList[user.OpenId]; !ok {
+	cache := models.NewCache()
+	allowOpenidList := cache.GetAllowList()
+	if _, ok := allowOpenidList[user.OpenId]; !ok {
 		result["code"] = http.StatusInternalServerError
 		result["msg"] = err.Error()
 		c.JSON(http.StatusForbidden, result)
@@ -223,7 +232,6 @@ type ResultGetSms struct {
 func GetSms(c *gin.Context) {
 	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
 	requestId := c.DefaultQuery("request_id", "0")
-	fmt.Println(requestId)
 	if requestId == "0" {
 		// 获取默认配置下的最新一条数据
 		row, err := models.GetLastActivePhoneNumber(ProjectId)
