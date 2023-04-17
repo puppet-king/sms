@@ -106,6 +106,7 @@ func web() {
 		v1.GET("/get-phone-number", api_v1.GetPhoneNumber)
 		v1.GET("/get-available-numbers", api_v1.GetAvailableNumbers)
 		v1.GET("/get-available-numbers-by-uid", api_v1.GetAvailableNumbersByUid)
+		v1.GET("/get-cache-sms", api_v1.GetCacheSms)
 
 		// tool
 		toolGroup := v1.Group("/tool")

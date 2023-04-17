@@ -292,6 +292,47 @@ func GetSms(c *gin.Context) {
 	c.String(http.StatusOK, resp)
 }
 
+// GetCacheSms 获取缓存手机短信验证码
+func GetCacheSms(c *gin.Context) {
+	params := setToken(c.MustGet("privateConfig").(*config.PrivateConfig).ApiKey)
+	requestId := c.DefaultQuery("request_id", "0")
+	if requestId == "0" {
+		// 获取默认配置下的最新一条数据
+		row, err := models.GetLastActivePhoneNumber(ProjectId)
+		if err != nil || row.RequestId == "" {
+			c.String(http.StatusBadRequest, "requestId 参数缺失")
+			return
+		}
+		requestId = row.RequestId
+	}
+
+	params.Set("request_id", requestId)
+
+	// 先从数据库读取是否已存在
+	table := models.SendPhoneNumberList{
+		RequestId: requestId,
+	}
+
+	info, err := table.GetInfoByRequestId()
+	if err == nil && info.Status > 0 {
+		if info.Status == 1 {
+			//{"code":200,"message":"Operation Success","data":"077866"}
+			success := ResultGetSms{
+				Code:    200,
+				Message: "Operation Success",
+				Data:    info.SmsCode,
+			}
+			c.JSON(http.StatusOK, success)
+			return
+		} else {
+			c.String(http.StatusBadRequest, "Number has been released or timeout, please reacquire")
+			return
+		}
+	}
+
+	c.String(http.StatusBadRequest, "not cache")
+}
+
 // ResultCancelRequest 返回 CancelRequest 请求 API 结构体
 type ResultCancelRequest struct {
 	Code    int    `json:"code"`
