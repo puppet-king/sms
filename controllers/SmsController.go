@@ -244,6 +244,28 @@ func GetSms(c *gin.Context) {
 
 	params.Set("request_id", requestId)
 
+	// 先从数据库读取是否已存在
+	table := models.SendPhoneNumberList{
+		RequestId: requestId,
+	}
+
+	info, err := table.GetInfoByRequestId()
+	if err == nil && info.Status > 0 {
+		if info.Status == 1 {
+			//{"code":200,"message":"Operation Success","data":"077866"}
+			success := ResultGetSms{
+				Code:    200,
+				Message: "Operation Success",
+				Data:    info.SmsCode,
+			}
+			c.JSON(http.StatusOK, success)
+			return
+		} else {
+			c.String(http.StatusBadRequest, "Number has been released or timeout, please reacquire")
+			return
+		}
+	}
+
 	curl := models.BaseCurl{
 		Host:   HOST,
 		Path:   "/api/control/get/sms",
@@ -264,10 +286,7 @@ func GetSms(c *gin.Context) {
 	}
 
 	// 修改短信信息 TODO 没有做异常处理
-	table := models.SendPhoneNumberList{
-		RequestId: requestId,
-		SmsCode:   s.Data,
-	}
+	table.SmsCode = s.Data
 	table.UpdateSmsSendSuccessStatus()
 
 	c.String(http.StatusOK, resp)

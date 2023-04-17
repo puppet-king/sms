@@ -263,3 +263,50 @@ func TestTableUser_List(t1 *testing.T) {
 		})
 	}
 }
+
+func TestSendPhoneNumberList_GetInfoByRequestId(t *testing.T) {
+	initDb()
+	type fields struct {
+		RequestId string
+		ProjectId string
+		UserId    string
+		AreaCode  string
+		Number    string
+		Status    int
+		CancelAt  string
+		SmsCode   string
+		CreateAt  string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    models.SendPhoneNumberList
+		wantErr bool
+	}{
+		{"base", fields{RequestId: "230317220106720201984"}, models.SendPhoneNumberList{}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &models.SendPhoneNumberList{
+				RequestId: tt.fields.RequestId,
+				ProjectId: tt.fields.ProjectId,
+				UserId:    tt.fields.UserId,
+				AreaCode:  tt.fields.AreaCode,
+				Number:    tt.fields.Number,
+				Status:    tt.fields.Status,
+				CancelAt:  tt.fields.CancelAt,
+				SmsCode:   tt.fields.SmsCode,
+				CreateAt:  tt.fields.CreateAt,
+			}
+			got, err := s.GetInfoByRequestId()
+			fmt.Println(got)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetInfoByRequestId() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetInfoByRequestId() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

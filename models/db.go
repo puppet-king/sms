@@ -139,6 +139,20 @@ func (s *SendPhoneNumberList) GetListByStatus(status int) ([]SendPhoneNumberList
 	return list, nil
 }
 
+// GetInfoByRequestId 根据 requestId 查询信息
+func (s *SendPhoneNumberList) GetInfoByRequestId() (SendPhoneNumberList, error) {
+	var query SendPhoneNumberList
+	err := DB.QueryRowx("SELECT request_id, project_id, user_id, area_code, number, status, cancel_at,  "+
+		"sms_code, create_at FROM `send_phone_number_list` "+
+		"WHERE `request_id` = ?", s.RequestId).StructScan(&query)
+
+	if err != nil {
+		return query, err
+	}
+
+	return query, nil
+}
+
 // GetListByUid 获取指定用户的合法 status
 func (s *SendPhoneNumberList) GetListByUid(userId string) ([]SendPhoneNumberList, error) {
 	var list []SendPhoneNumberList
