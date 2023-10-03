@@ -81,7 +81,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	//writeFile("openid.txt", openId+"\r\n")
+	writeFile("openid.txt", openId+"\r\n")
 	cache := models.NewCache()
 	loginList := cache.GetLastLoginInfo()
 	loginList[openId] = time.Now().Format("2006-01-02 15:04:05")
